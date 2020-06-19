@@ -24,6 +24,7 @@ class SimpleRepositoryImpl<E extends Entity> implements RepositoryIntf<E> {
 	 * Internal list that represents the repository.
 	 */
 	private final List<E> list;
+	private final org.apache.log4j.Logger realLogger;
 
 
 	/**
@@ -33,6 +34,7 @@ class SimpleRepositoryImpl<E extends Entity> implements RepositoryIntf<E> {
 	 */
 	public SimpleRepositoryImpl( List<E> list ) {
 		this.list = list;
+		realLogger = org.apache.log4j.Logger.getLogger( SimpleRepositoryImpl.class );
 	}
 
 
@@ -184,6 +186,7 @@ class SimpleRepositoryImpl<E extends Entity> implements RepositoryIntf<E> {
 	public void deleteById( String id ) {
 		E e = findById( list, id );
 		delete( e );
+		realLogger.info( "==> deleted(" + e.getId() + ")" );
 	}
 
 
@@ -212,6 +215,7 @@ class SimpleRepositoryImpl<E extends Entity> implements RepositoryIntf<E> {
 			E entity = findById( list, id );
 			if( entity != null ) {
 				list.remove( entity );
+				realLogger.info( "==> deleted(" + entity.getId() + ")" );
 			}
 		}
 	}
@@ -226,6 +230,7 @@ class SimpleRepositoryImpl<E extends Entity> implements RepositoryIntf<E> {
 	public void deleteAll( Iterable<E> entities ) {
 		for( E entity : entities ) {
 			list.remove( entity );
+			realLogger.info( "==> deleted(" + entity.getId() + ")" );
 		}
 	}
 
@@ -237,6 +242,7 @@ class SimpleRepositoryImpl<E extends Entity> implements RepositoryIntf<E> {
 	@Override
 	public void deleteAll() {
 			list.clear();
+			realLogger.info( "==> cleared all)" );
 	}
 
 
@@ -268,16 +274,16 @@ class SimpleRepositoryImpl<E extends Entity> implements RepositoryIntf<E> {
 		E e1 = findById( list, entity.getId() );
 		if( e1 != null ) {
 			if( e1 != entity ) {
-				//logger.error( "==> duplicate instance update(" + entity.getId() + ").", null );
+				realLogger.error( "==> duplicate instance update(" + entity.getId() + ").", null );
 				entity = e1;
 
 			} else {
-				//log.info( "==> updated(" + entity.getId() + ")" );
+				realLogger.info( "==> updated(" + entity.getId() + ")" );
 			}
 
 		} else {
 			if( insert ) {
-				//log.info( "==> inserted(" + entity.getId() + ")" );
+				realLogger.info( "==> inserted(" + entity.getId() + ")" );
 				list.add( entity );
 			}
 		}
