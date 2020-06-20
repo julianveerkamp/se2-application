@@ -32,6 +32,15 @@ import static com.application.se2.AppConfigurator.LoggerTopics;
 public class Application {
 	private static Logger logger = Logger.getInstance( Application.class );
 
+	/*
+	 * Using Spring's auto-wiring to create Singleton RepositoryBuilder instance
+	 * and "wire" its reference to all with @Autowired annotated variables of type
+	 * RepositoryBuilder.
+	 */
+	@Autowired
+	private RepositoryBuilder repositoryBuilder;
+
+
 	@Autowired
 	private ApplicationContext applicationContext;
 
@@ -98,8 +107,10 @@ public class Application {
 
 		/*
 		 * RepositoryBuilder is a Spring @Component that builds repositories.
+		 * 
+		 * Using Spring's auto-wiring to obtain reference to RepositoryBuilder component.
 		 */
-		final RepositoryBuilder repositoryBuilder = RepositoryBuilder.getInstance();
+		//final RepositoryBuilder repositoryBuilder = RepositoryBuilder.getInstance();
 
 		/*
 		 * AppBuilder builds applications components and returns a startable Runner instance.

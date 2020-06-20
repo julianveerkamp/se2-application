@@ -1,5 +1,6 @@
 package com.application.se2.model;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Date;
 
@@ -15,7 +16,9 @@ import com.application.se2.misc.EntityProperty;
  * 
  * @author sgra64
  */
-public class Note {
+public class Note implements Serializable {
+	private static final long serialVersionUID = 1L;
+
 	private static final String FieldSeparator = ";; ";
 	private static long lastTimeStamp = 0L;
 

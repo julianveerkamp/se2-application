@@ -5,9 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
+
 import com.application.se2.components.BuilderIntf;
 import com.application.se2.model.Article;
 import com.application.se2.model.Customer;
+import com.application.se2.model.Entity;
 import com.application.se2.model.Customer.Status;
 
 
@@ -27,30 +32,64 @@ import com.application.se2.model.Customer.Status;
  * @author sgra64
  *
  */
+
+
+/*
+ * @Component annotation causes Spring to create singleton instance of RepositoryBuilder
+ * and auto-wire its reference to all variables of that class annotated with @Autowired.
+ * 
+ * (see use in class com.application.se2.Application.java:
+ *		@Autowired
+ *		private RepositoryBuilder repositoryBuilder; 
+ */
+@Component
 public class RepositoryBuilder implements BuilderIntf {
 
-	private static RepositoryBuilder _singletonInstance = null;
-
+	/*
+	 * Optional of RepositoryRunner instance, if repository could successfully
+	 * be created and initialized.
+	 */
 	private Optional<RepositoryRunner>repositoryRunner;
+
+	/*
+	 * How to access a value defined in the application.properties file in Spring Boot:
+	 * https://stackoverflow.com/questions/30528255/how-to-access-a-value-defined-in-the-application-properties-file-in-spring-boot
+	 * 
+	 * @Value( "${serialization.datapath}" )
+	 * private String path;
+	 */
+	@Autowired
+	private Environment env;
+
 
 	/**
 	 * Private constructor according to the Singleton pattern.
+	 * This constructor is invoked by Spring for @Component instantiation.
+	 * 
 	 */
 	private RepositoryBuilder() {
 		this.repositoryRunner = Optional.empty();
 	}
 
+
+	/*
+	 * Using Spring's auto-wiring to create Singleton RepositoryBuilder instance
+	 * and "wire" its reference to all with @Autowired annotated variables of type
+	 * RepositoryBuilder replaces the need for getInstance() { ... };
+	 */
 	/**
 	 * Access method to singleton instance created when first called.
 	 * @return reference to singleton builder instance.
-	 */
+	 * /
+
+	private static RepositoryBuilder _singletonInstance = null;
+
 	public static RepositoryBuilder getInstance() {
 		if( _singletonInstance == null ) {
 			_singletonInstance = new RepositoryBuilder();
 		}
-		return _singletonInstance;
 	}
-
+	*/
 
 	/**
 	 * Repository-build code returning a repository Runner instance.
@@ -61,18 +100,39 @@ public class RepositoryBuilder implements BuilderIntf {
 	public RepositoryRunner build() {
 		HashMap<String, RepositoryIntf<?>> repositoryMap = new HashMap<String,RepositoryIntf<?>>();
 
-		List<Customer>customerList = buildCustomerData_phase1();
-		RepositoryIntf<Customer> customerRepository = new SimpleRepositoryImpl<Customer>( customerList );
+		//List<Customer>customerList = buildCustomerData_phase1();
+		final List<Customer>customerList = new ArrayList<Customer>();
+		final SerializationProviderIntf CustomerSerializationProvider = getSerializationProvider( Customer.class );
+
+		final RepositoryIntf<Customer> customerRepository
+			//= new SimpleRepositoryImpl<Customer>( customerList );
+			= new SerializableRepositoryImpl<Customer>( customerList, CustomerSerializationProvider );
+
 		repositoryMap.put( Customer.class.getName(), customerRepository );
 
-		buildCustomerData_phase2( customerRepository );
+		if( customerRepository.count() == 0 ) {
+			customerRepository.saveAll( buildCustomerData_phase1() );
+			buildCustomerData_phase2( customerRepository );
+		}
 
-		List<Article>articleList = buildArticleData();
-		RepositoryIntf<Article> articleRepository = new SimpleRepositoryImpl<Article>( articleList );
+		//List<Article>articleList = buildArticleData();
+		final List<Article>articleList = new ArrayList<Article>();
+		final SerializationProviderIntf ArticleSerializationProvider = getSerializationProvider( Article.class );
+
+		final RepositoryIntf<Article> articleRepository
+			//= new SimpleRepositoryImpl<Article>( articleList );
+			= new SerializableRepositoryImpl<Article>( articleList, ArticleSerializationProvider );
+
 		repositoryMap.put( Article.class.getName(), articleRepository );
 
+		if( articleRepository.count() == 0 ) {
+			articleRepository.saveAll( buildArticleData() );
+		}
+
 		RepositoryRunner repositoryRunner = new RepositoryRunner( repositoryMap );
+
 		this.repositoryRunner = Optional.of( repositoryRunner );
+
 		return repositoryRunner;
 	}
 
@@ -206,6 +266,7 @@ public class RepositoryBuilder implements BuilderIntf {
 				.setStatus( Customer.Status.SUSP );
 		});
 
+		customerRepository.saveAll( customerRepository.findAll() );
 	}
 
 
@@ -266,6 +327,32 @@ public class RepositoryBuilder implements BuilderIntf {
 		list.add( new Article( "Canon Objektiv EF 200-400mm f/4L IS USM + Extender 1.4x", "11.699,00 EUR" ) );
 
 		return list;
+	}
+
+
+	private SerializationProviderIntf getSerializationProvider( Class<? extends Entity> clazz ) {
+		SerializationProviderIntf serializationProvider = null;
+		String format = env.getProperty( "serialization.format" );
+		String path = env.getProperty( "serialization.datapath" );
+		if( path == null ) {
+			path = "";
+		}
+		if( format != null ) {
+			format = format.toLowerCase().trim();
+			// found Java-Serialization configuration
+			if( format.contains( "java" ) ) {
+				serializationProvider = new JavaSerializationProviderImpl( path, clazz );
+			} else {
+				// found Json-Serialization configuration
+				if( format.contains( "json" ) ) {
+					serializationProvider = new JsonSerializationProviderImpl( path, clazz );
+				}
+			}
+		}
+		if( serializationProvider == null ) {
+			serializationProvider = new NullSerializationProviderImpl( path, clazz );
+		}
+		return serializationProvider;
 	}
 
 }
