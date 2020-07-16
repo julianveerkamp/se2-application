@@ -1,5 +1,6 @@
 package com.application.se2.model;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Date;
 
@@ -15,7 +16,9 @@ import com.application.se2.misc.EntityProperty;
  * 
  * @author sgra64
  */
-public class Note {
+public class Note implements Serializable {
+	private static final long serialVersionUID = 1L;
+
 	private static final String FieldSeparator = ";; ";
 	private static long lastTimeStamp = 0L;
 
@@ -57,6 +60,15 @@ public class Note {
 	 */
 	public void setText( String text ) {
 		this.noteText = text;
+	}
+
+
+	/**
+	 * Externalize Note as String. Example: "2018-03-15 20:10:27.730, Customer 1234 created".
+	 * @return Note as externalized String.
+	 */
+	public String externalize() {
+		return EntityProperty.DF_yyyy_MM_dd_HH_mm_ss_SSS.format( timeStamp ) + FieldSeparator + noteText;
 	}
 
 

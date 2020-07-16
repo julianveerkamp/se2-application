@@ -5,6 +5,13 @@ import java.util.Date;
 import java.util.List;
 
 import com.application.se2.misc.IDGenerator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+//import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+//import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+//import com.application.se2.model.customserializer.CustomerJSONSerializer;
+//import com.application.se2.model.customserializer.CustomerJSONDeserializer;
 
 
 /**
@@ -13,6 +20,10 @@ import com.application.se2.misc.IDGenerator;
  * @author sgra64
  * 
  */
+
+//@JsonSerialize(using = CustomerJSONSerializer.class)
+//@JsonDeserialize(using = CustomerJSONDeserializer.class)
+
 public class Customer implements Entity {
 	private static final long serialVersionUID = 1L;
 
@@ -30,14 +41,24 @@ public class Customer implements Entity {
 
 	private final List<String>contacts;
 
+	@JsonIgnore
 	private final List<Note>notes;
 
+	@JsonIgnore
 	private final Date created;
 
 	public enum Status { ACT, SUSP, TERM };
 	//
 	private Status status;
 
+
+	/**
+	 * Private default constructor (required by JSON deserialization).
+	 */
+	@SuppressWarnings("unused")
+	private Customer() {
+		this( null );
+	}
 
 	/**
 	 * Public constructor.
@@ -47,12 +68,13 @@ public class Customer implements Entity {
 		this( null, name );
 	}
 
+
 	/**
 	 * Private constructor.
 	 * @param id if null is passed as id, an ID will be generated.
 	 * @param name Customer name.
 	 */
-	private Customer( final String id, final String name ) {
+	public Customer( final String id, final String name ) {
 		this.id = id == null? CustomerIdGenerator.nextId() : id;
 		setName( name );
 		this.address = "";
@@ -146,6 +168,7 @@ public class Customer implements Entity {
 	 * 
 	 * @return Customer notes.
 	 */
+	@JsonIgnore
 	public List<Note>getNotes() {
 		return notes;
 	}
@@ -170,6 +193,7 @@ public class Customer implements Entity {
 	 * 
 	 * @return creation date of this Customer instance.
 	 */
+	@JsonIgnore
 	public Date getCreationDate() {
 		return created;
 	}

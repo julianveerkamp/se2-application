@@ -1,0 +1,36 @@
+
+Notes-2.2.1-JSON-SNAPSHOT.txt
+
+The code in Version 2.2.1-JSON-SNAPSHOT is unfortunately broke and will not
+build because various JSON-related imports cannot be resolved including:
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+In order to fix the problem, the Jackson-package that is used in the code base
+for JSON processing needs to be installed.
+
+Three packages are needed:
+ - jackson core, databind and annotations
+
+Go to the central repository and search for these packages using as search
+string: "jackson core databind annotations".
+
+Use version 2.9.8 for all three packages.
+
+Build and run the code base and verify that .json-Files have been created
+in the ./data directory.
+
+Inspect those .json-Files.
+
+Update the version to 2.2.2-JSON-SNAPSHOT such that
+  mvn package
+
+will produce in target
+  se2-application-2.2.2-JSON-SNAPSHOT.jar
+
+Check changes of the now fixed code base 2.2.2-JSON into your repository.
+
++

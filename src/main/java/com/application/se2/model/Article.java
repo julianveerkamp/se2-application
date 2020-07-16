@@ -26,6 +26,14 @@ public class Article implements Entity {
 
 
 	/**
+	 * Private default constructor (required by JSON deserialization).
+	 */
+	@SuppressWarnings("unused")
+	private Article() {
+		this( null, null );
+	}
+
+	/**
 	 * Public constructor.
 	 * @param name Article name.
 	 * @param price Article price.
