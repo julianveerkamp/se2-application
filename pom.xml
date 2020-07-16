@@ -1,90 +1,108 @@
 <project
 	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
->
+	>
 	<modelVersion>4.0.0</modelVersion>
 
 	<!-- Parent project file.
 	https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-parent
-	-->
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.1.8.RELEASE</version>
-	</parent>
+-->
+<parent>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-parent</artifactId>
+	<version>2.1.8.RELEASE</version>
+</parent>
 
-	<!-- This project. -->
-	<groupId>de.beuth</groupId>
-	<artifactId>se2-application</artifactId>
-	<version>${project.version}-SNAPSHOT</version>
+<!-- This project. -->
+<groupId>de.beuth</groupId>
+<artifactId>se2-application</artifactId>
+<version>${project.version}-SNAPSHOT</version>
 
-	<name>se2-application</name>
-	<description>Software Engineering 2 application with Spring Boot</description>
-	<packaging>jar</packaging>
+<name>se2-application</name>
+<description>Software Engineering 2 application with Spring Boot</description>
+<packaging>jar</packaging>
 
-	<properties>
-		<project.version>2.2.1-JSON</project.version>
+<properties>
+	<project.version>2.2.2-JSON</project.version>
 
-		<springboot.version>2.1.8.RELEASE</springboot.version>
-		<junit.version>4.12</junit.version>
-		<openjfx.version>12</openjfx.version>
-		<log4j.version>1.2.17</log4j.version>
+	<springboot.version>2.1.8.RELEASE</springboot.version>
+	<junit.version>4.12</junit.version>
+	<openjfx.version>12</openjfx.version>
+	<log4j.version>1.2.17</log4j.version>
+	<jackson.version>2.9.8</jackson.version>
 
-		<maven.test.skip>true</maven.test.skip>
+	<maven.test.skip>true</maven.test.skip>
 
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.compiler.source>1.12</project.compiler.source>
-		<project.compiler.target>1.12</project.compiler.target>
-	</properties>
+	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<project.compiler.source>1.12</project.compiler.source>
+	<project.compiler.target>1.12</project.compiler.target>
+</properties>
 
-	<!-- Project dependencies. -->
-	<dependencies>
-	  <dependency>
+<!-- Project dependencies. -->
+<dependencies>
+	<dependency>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter</artifactId>
-	  </dependency>
+	</dependency>
 
-	  <dependency>
+	<dependency>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-test</artifactId>
 		<scope>test</scope>
-	  </dependency>
+	</dependency>
 
-	  <dependency>
+	<dependency>
 		<groupId>junit</groupId>
 		<artifactId>junit</artifactId>
 		<scope>test</scope>
-	  </dependency>
+	</dependency>
 
-	  <!-- include open JavaFX openjfx dependency for Java -->
-	  <!-- https://stackoverflow.com/questions/52653836/maven-shade-javafx-runtime-components-are-missing -->
-	  <dependency>
+	<!-- include open JavaFX openjfx dependency for Java -->
+	<!-- https://stackoverflow.com/questions/52653836/maven-shade-javafx-runtime-components-are-missing -->
+	<dependency>
 		<groupId>org.openjfx</groupId>
 		<artifactId>javafx-fxml</artifactId>
 		<version>${openjfx.version}</version>
-	  </dependency>
-	  <!-- https://mvnrepository.com/artifact/log4j/log4j -->
-	  <dependency>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/log4j/log4j -->
+	<dependency>
 		<groupId>log4j</groupId>
 		<artifactId>log4j</artifactId>
 		<version>${log4j.version}</version>
-	  </dependency>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
+	<dependency>
+		<groupId>com.fasterxml.jackson.core</groupId>
+		<artifactId>jackson-core</artifactId>
+		<version>${jackson.version}</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations -->
+	<dependency>
+		<groupId>com.fasterxml.jackson.core</groupId>
+		<artifactId>jackson-annotations</artifactId>
+		<version>${jackson.version}</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+	<dependency>
+		<groupId>com.fasterxml.jackson.core</groupId>
+		<artifactId>jackson-databind</artifactId>
+		<version>${jackson.version}</version>
+	</dependency>
+</dependencies>
 
-	 </dependencies>
-
-	<!-- Configurations for build stage. -->
-	<build>
-	  <plugins>
+<!-- Configurations for build stage. -->
+<build>
+	<plugins>
 
 		<!-- Use Spring Boots maven build plugin. -->
 		<plugin>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-maven-plugin</artifactId>
 		</plugin>
-	  </plugins>
+	</plugins>
 
-	  <!-- Build plugin extension to copy/package resources needed during run-time to target -->
-	  <resources>
+	<!-- Build plugin extension to copy/package resources needed during run-time to target -->
+	<resources>
 		<resource>
 			<!-- Copy all files to ./target/classes -->
 			<directory>src/main/resources</directory>
@@ -98,17 +116,17 @@
 				<include>**/*.sql</include>
 			</includes>
 		</resource>
-	  </resources>
+	</resources>
 
-	</build>
+</build>
 
-	<reporting>
-	  <plugins>
+<reporting>
+	<plugins>
 		<plugin>
 			<groupId>org.apache.maven.plugins</groupId>
 			<artifactId>maven-surefire-report-plugin</artifactId>
 		</plugin>
-	  </plugins>
-	</reporting>
+	</plugins>
+</reporting>
 
 </project>
