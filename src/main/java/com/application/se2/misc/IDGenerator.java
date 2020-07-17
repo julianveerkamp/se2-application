@@ -1,5 +1,6 @@
 package com.application.se2.misc;
 
+import java.util.Date;
 
 /**
  * Simple ID-Generator using random numbers and supporting a variety of formats
@@ -14,6 +15,8 @@ package com.application.se2.misc;
  *
  */
 public class IDGenerator {
+	private static long lastTimeStamp = 0L;
+
 	private final String prefix;
 	private final int len;
 	private final String alphabet;
@@ -68,6 +71,21 @@ public class IDGenerator {
 			sb.insert( 0, "0" );
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Generate next time-stamped id.
+	 * @return
+	 */
+	public static long getTimedUniqueId() {
+		Date d = new Date();
+		long dl = d.getTime();
+		if( dl > lastTimeStamp ) {
+			lastTimeStamp = dl;
+		} else {
+			dl = ++lastTimeStamp;
+		}
+		return dl;
 	}
 
 }

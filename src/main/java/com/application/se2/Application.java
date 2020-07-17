@@ -4,10 +4,11 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.EventListener;
 
 import com.application.se2.components.BuilderIntf;
@@ -15,7 +16,11 @@ import com.application.se2.components.ComponentBase;
 import com.application.se2.components.ComponentIntf;
 import com.application.se2.components.RunnerIntf;
 import com.application.se2.fxgui.FXInterface;
+import com.application.se2.logic.ArticleCatalog;
+import com.application.se2.logic.CustomerManager;
 import com.application.se2.misc.Logger;
+import com.application.se2.model.Customer;
+import com.application.se2.repository.CustomerRepositoryIntf;
 import com.application.se2.repository.RepositoryBuilder;
 
 import static com.application.se2.AppConfigurator.LoggerTopics;
@@ -32,8 +37,31 @@ import static com.application.se2.AppConfigurator.LoggerTopics;
 public class Application {
 	private static Logger logger = Logger.getInstance( Application.class );
 
+	/*
+	 * Using Spring's auto-wiring to create Singleton RepositoryBuilder instance
+	 * and "wire" its reference to all with @Autowired annotated variables of type
+	 * RepositoryBuilder.
+	 */
 	@Autowired
-	private ApplicationContext applicationContext;
+	private RepositoryBuilder repositoryBuilder;
+
+	@Autowired
+	private ConfigurableApplicationContext applicationContext;
+
+	@Autowired
+	private CustomerRepositoryIntf customerRepository;
+
+	@Autowired
+	private CustomerManager customerManagerLogic;
+
+	@Autowired
+	private ArticleCatalog articleCatalogLogic;
+
+	/*
+	 * AppBuilder builds applications components and returns a startable Runner instance.
+	 */
+	@Autowired
+	private AppBuilder appBuilder;
 
 
 	/**
@@ -68,7 +96,7 @@ public class Application {
 	}
 
 
-	/**
+	/** 
 	 * Java's main() method.
 	 * 
 	 * @param args arguments passed from invoking command.
@@ -78,8 +106,25 @@ public class Application {
 		System.out.print( "   Initialize Spring Boot and create Application instance." );
 
 		// Initialize Spring Boot and create Application instance.
+		//@SuppressWarnings("unused")
+		//ApplicationContext applicationContext = SpringApplication.run( Application.class, args );
+
+		/*
+		 * Starting Spring Boot, which also creates the singleton Application instance.
+		 * If started through Spring Boot, singleton instance will receive an
+		 * ApplicationReadyEvent caught by the Application lifecycle() method.
+		 * 
+		 * Need to run servlet container (tomcat) for the h2 console that also needs to
+		 * be shut down properly to not have servlet threads sticking around preventing
+		 * clean exit.
+		 */
+
 		@SuppressWarnings("unused")
-		ApplicationContext applicationContext = SpringApplication.run( Application.class, args );
+		ConfigurableApplicationContext
+		applicationContext =
+			new SpringApplicationBuilder( Application.class )
+				.web( WebApplicationType.SERVLET )
+				.run();
 
 	};
 
@@ -95,17 +140,6 @@ public class Application {
 		CountDownLatch waitForExit = new CountDownLatch(
 			isRunningAsTest? 0 : 2		// Test runs have no GUI, hence no need to wait before exit.
 		);
-
-		/*
-		 * RepositoryBuilder is a Spring @Component that builds repositories.
-		 */
-		final RepositoryBuilder repositoryBuilder = RepositoryBuilder.getInstance();
-
-		/*
-		 * AppBuilder builds applications components and returns a startable Runner instance.
-		 */
-		final AppBuilder appBuilder = AppBuilder.getInstance();
-		appBuilder.inject( repositoryBuilder );
 
 		final RunnerIntf appRunner = appBuilder.build();
 
@@ -128,6 +162,18 @@ public class Application {
 
 			onStart -> {
 				logger.log( LoggerTopics.Info, appName + " starting..." );
+
+				appBuilder.inject( customerManagerLogic );
+				appBuilder.inject( articleCatalogLogic );
+
+				repositoryBuilder.build();
+
+				long count = customerRepository.count();
+				System.out.println( "Customer records found: " + count );
+				for( Customer customer : customerRepository.findAll() ) {
+					System.out.println( " --> " + customer.getId() + ",\t" + customer.getName() + ",\t" + customer.getStatus().toString() );
+				}
+				System.out.println( "---------------------------------------------------------" );
 
 				repositoryBuilder.startup();
 
@@ -174,7 +220,8 @@ public class Application {
 			 */
 			onExit -> {
 				System.out.println( onExit + "\n" + "shutting down components..." );
-				AppBuilder.getInstance().iterateComponentsReverseOrder( component -> {
+
+				appBuilder.iterateComponentsReverseOrder( component -> {
 					ComponentBase.<ComponentIntf.LogicIntf>logicIntf( component, logic -> {
 						logic.shutdown();
 					});
@@ -188,6 +235,15 @@ public class Application {
 				});
 
 				waitForExit.countDown();	// unblock main-thread to leave main()
+
+				/*
+				 * Close Spring containers, including servlet beans that keep sticking
+				 * around and prevent the application to cleanly exit.
+				 * Source: https://www.baeldung.com/spring-boot-shutdown
+				 */
+				//if( applicationContext != null ) {
+					applicationContext.close();
+				//}
 
 			},
 
@@ -222,7 +278,7 @@ public class Application {
 
 	/**
 	 * Return the Application name.
-	 * 
+	 * ividuellle 
 	 * @return Application name.
 	 */
 	public String getName() {

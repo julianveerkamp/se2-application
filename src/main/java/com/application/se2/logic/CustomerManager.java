@@ -2,7 +2,11 @@ package com.application.se2.logic;
 
 import static com.application.se2.AppConfigurator.LoggerTopics;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.application.se2.components.AppComp;
 import com.application.se2.components.ComponentBase;
@@ -16,6 +20,7 @@ import com.application.se2.misc.Traceable;
 import com.application.se2.model.Customer;
 import com.application.se2.model.Entity;
 import com.application.se2.model.Note;
+import com.application.se2.repository.CustomerRepositoryIntf;
 
 
 /**
@@ -28,25 +33,28 @@ import com.application.se2.model.Note;
  * @author sgra64
  *
  */
+@Component
 public class CustomerManager implements CustomerManagerComp.LogicIntf {
 	private static Logger logger = Logger.getInstance( CustomerManager.class );
 
-	private final CustomerManagerComp component;
-	private final AppComp.LogicIntf app;
+	private CustomerManagerComp component = null;
+	private AppComp.LogicIntf app = null;
+
+	@Autowired
+	private CustomerRepositoryIntf customerRepository;
 
 
 	/**
-	 * Public constructor.
-	 * 
-	 * @param component reference to CustomerManagerComp component.
-	 * @param app Application logic needed to delegate Exit-button pressed event.
+	 * Public injection method.
+	 * @param component associated CustomerManagerComponent.
+	 * @param app AppComponent to call exit() method.
 	 */
-	public CustomerManager( CustomerManagerComp component, AppComp.LogicIntf app ) {
+	public void inject( CustomerManagerComp component, AppComp.LogicIntf app ) {
 		this.component = component;
 		this.app = app;
 	}
 
-	
+
 	/**
 	 * Method called on startup.
 	 * 
@@ -78,9 +86,30 @@ public class CustomerManager implements CustomerManagerComp.LogicIntf {
 	@Override
 	public Iterable<Customer> findAll( String match, long limit ) {
 		// TODO: implement match, limit
-		return component.invokeRepository( repository -> {
-			return repository.findAll();
-		});
+		//return component.invokeRepository( repository -> {
+		//	return repository.findAll();
+		//});
+		Iterable<Customer> resultSet = customerRepository.findAll();
+		return resultSet;
+	}
+
+
+	/**
+	 * Find method that returns entity that matches the regular expression. If more than
+	 * one entity match, a random matching entity is returned.
+	 * 
+	 * @param regEx regular expression to match getName() property.
+	 * @return Optional of entity matching name.
+	 */
+	@Override
+	public Iterable<? extends Entity> findByName( String match ) {
+		List<Customer> resultSet = new ArrayList<Customer>();
+		for( Customer e : customerRepository.findAll() ) {
+			if( match.equals( e.getName() ) ) {
+				resultSet.add( e );
+			}
+		}
+		return resultSet;
 	}
 
 
@@ -186,12 +215,10 @@ public class CustomerManager implements CustomerManagerComp.LogicIntf {
 			}
 		});
 
-		component.invokeRepository( repository -> {
-			repository.save( customer );
-			ComponentBase.<ComponentIntf.TableViewIntf>viewIntf( component, view -> {
-				view.refreshView();
-			});
-			return null;
+		customerRepository.save( customer );
+
+		ComponentBase.<ComponentIntf.TableViewIntf>viewIntf( component, view -> {
+			view.refreshView();
 		});
 	}
 
@@ -204,21 +231,15 @@ public class CustomerManager implements CustomerManagerComp.LogicIntf {
 	@Override
 	public void delete( List<String> selection ) {
 
-		component.invokeRepository( repository -> {
-			if( selection.size() > 0 ) {
-				logger.log( LoggerTopics.EntityCRUD, "Delete ", Customer.class.getSimpleName(), "(s): ",
-						String.join( ", ", selection )
-					);
-					// selection.stream()
-					//		.map( Object::toString )
-					//		.collect( Collectors.joining( ", ") )
-					// );
-			}
-			repository.deleteAllById( selection );
-			ComponentBase.<ComponentIntf.TableViewIntf>viewIntf( component, view -> {
-				view.refreshView();
-			});
-			return null;
+		for( String id : selection ) {
+			logger.log( LoggerTopics.EntityCRUD, "Delete ", Customer.class.getSimpleName(), "(s): ",
+				String.join( ", ", selection )
+			);
+			customerRepository.deleteById( id );
+		}
+
+		ComponentBase.<ComponentIntf.TableViewIntf>viewIntf( component, view -> {
+			view.refreshView();
 		});
 	}
 

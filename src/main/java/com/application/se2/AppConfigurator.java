@@ -2,6 +2,8 @@ package com.application.se2;
 
 import java.util.EnumSet;
 
+import org.springframework.stereotype.Component;
+
 import com.application.se2.components.ComponentBase;
 import com.application.se2.components.ComponentIntf;
 import com.application.se2.misc.StringProperty;
@@ -25,6 +27,7 @@ import com.application.se2.model.Note;
  * @author sgra64
  *
  */
+@Component
 public class AppConfigurator implements ComponentIntf {
 	private static AppConfigurator instance = null;
 
@@ -97,17 +100,17 @@ public class AppConfigurator implements ComponentIntf {
 	 */
 	private AppConfigurator() { }
 
-	/**
+/**
 	 * Access method to singleton instance created when first called.
 	 * @return reference to singleton view builder instance.
-	 */
+	 * /
 	public static AppConfigurator getInstance() {
 		if( instance == null ) {
 			instance = new AppConfigurator();
 		}
 		return instance;
 	}
-
+*/
 
 	/*
 	 * Configuration data of main-App Tab-View as key-value pairs.

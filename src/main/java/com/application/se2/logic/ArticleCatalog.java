@@ -2,6 +2,9 @@ package com.application.se2.logic;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.application.se2.AppConfigurator.LoggerTopics;
 import com.application.se2.components.AppComp;
 import com.application.se2.components.ArticleCatalogComp;
@@ -15,6 +18,7 @@ import com.application.se2.misc.Traceable;
 import com.application.se2.model.Article;
 import com.application.se2.model.Entity;
 import com.application.se2.model.Note;
+import com.application.se2.repository.ArticleRepositoryIntf;
 
 
 /**
@@ -27,20 +31,23 @@ import com.application.se2.model.Note;
  * @author sgra64
  *
  */
+@Component
 public class ArticleCatalog implements ArticleCatalogComp.LogicIntf {
 	private static Logger logger = Logger.getInstance( ArticleCatalog.class );
 
-	private final ArticleCatalogComp component;
-	private final AppComp.LogicIntf app;
+	private ArticleCatalogComp component;
+	private AppComp.LogicIntf app;
+
+	@Autowired
+	private ArticleRepositoryIntf articleRepository;
 
 
 	/**
-	 * Public constructor.
-	 * 
-	 * @param component reference to ArticleCatalogComp component.
-	 * @param app Application logic needed to delegate Exit-button pressed event.
+	 * Public injection method.
+	 * @param component associated ArticleComponent.
+	 * @param app AppComponent to call exit() method.
 	 */
-	public ArticleCatalog( ArticleCatalogComp component, AppComp.LogicIntf app ) {
+	public void inject( ArticleCatalogComp component, AppComp.LogicIntf app ) {
 		this.component = component;
 		this.app = app;
 	}
@@ -77,9 +84,10 @@ public class ArticleCatalog implements ArticleCatalogComp.LogicIntf {
 	@Override
 	public Iterable<Article> findAll( String match, long limit ) {
 		// TODO: implement match, limit
-		return component.invokeRepository( repository -> {
-			return repository.findAll();
-		});
+		//return component.invokeRepository( repository -> {
+		//	return repository.findAll();
+		//});
+		return articleRepository.findAll();
 	}
 
 
@@ -126,7 +134,6 @@ public class ArticleCatalog implements ArticleCatalogComp.LogicIntf {
 	@Override
 	public void update( EntityPropertyUpdateSet updates ) {
 		Traceable primaryObject = updates.getRootObject();
-		//Property parentProperty = primaryObject.getParentProperty();
 		Article customer = (Article)primaryObject.traverse( Article.class );
 
 		logger.log( LoggerTopics.EntityCRUD, "Update ", Article.class.getSimpleName(), ": ", customer.getId() );
@@ -140,12 +147,10 @@ public class ArticleCatalog implements ArticleCatalogComp.LogicIntf {
 			p.setValue( customer, newValue );
 		});
 
-		component.invokeRepository( repository -> {
-			repository.save( customer );
-			ComponentBase.<ComponentIntf.TableViewIntf>viewIntf( component, view -> {
-				view.refreshView();
-			});
-			return null;
+		articleRepository.save( customer );
+
+		ComponentBase.<ComponentIntf.TableViewIntf>viewIntf( component, view -> {
+			view.refreshView();
 		});
 	}
 
@@ -158,21 +163,15 @@ public class ArticleCatalog implements ArticleCatalogComp.LogicIntf {
 	@Override
 	public void delete( List<String> selection ) {
 
-		component.invokeRepository( repository -> {
-			if( selection.size() > 0 ) {
-				logger.log( LoggerTopics.EntityCRUD, "Delete ", Article.class.getSimpleName(), "(s): ",
-						String.join( ", ", selection )
-					);
-					// selection.stream()
-					//		.map( Object::toString )
-					//		.collect( Collectors.joining( ", ") )
-					// );
-			}
-			repository.deleteAllById( selection );
-			ComponentBase.<ComponentIntf.TableViewIntf>viewIntf( component, view -> {
-				view.refreshView();
-			});
-			return null;
+		for( String id : selection ) {
+			logger.log( LoggerTopics.EntityCRUD, "Delete ", Article.class.getSimpleName(), "(s): ",
+				String.join( ", ", selection )
+			);
+			articleRepository.deleteById( id );
+		}
+
+		ComponentBase.<ComponentIntf.TableViewIntf>viewIntf( component, view -> {
+			view.refreshView();
 		});
 	}
 

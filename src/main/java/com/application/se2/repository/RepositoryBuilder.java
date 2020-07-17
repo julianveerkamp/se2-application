@@ -1,11 +1,15 @@
 package com.application.se2.repository;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.application.se2.components.BuilderIntf;
+import com.application.se2.components.RunnerIntf;
+import com.application.se2.misc.Callback;
 import com.application.se2.model.Article;
 import com.application.se2.model.Customer;
 import com.application.se2.model.Customer.Status;
@@ -27,28 +31,48 @@ import com.application.se2.model.Customer.Status;
  * @author sgra64
  *
  */
+
+
+/*
+ * @Component annotation causes Spring to create singleton instance of RepositoryBuilder
+ * and auto-wire its reference to all variables of that class annotated with @Autowired.
+ * 
+ * (see use in class com.application.se2.Application.java:
+ *		@Autowired
+ *		private RepositoryBuilder repositoryBuilder; 
+ */
+@Component
 public class RepositoryBuilder implements BuilderIntf {
 
-	private static RepositoryBuilder _singletonInstance = null;
+	@Autowired
+	private CustomerRepositoryIntf customerRepository;
 
-	private Optional<RepositoryRunner>repositoryRunner;
 
-	/**
-	 * Private constructor according to the Singleton pattern.
+	@Autowired
+	private ArticleRepositoryIntf articleRepository;
+
+	/*
+	 * Optional of RepositoryRunner instance, if repository could successfully
+	 * be created and initialized.
 	 */
-	private RepositoryBuilder() {
-		this.repositoryRunner = Optional.empty();
-	}
+	private Optional<RepositoryRunner>repositoryRunner = Optional.of( new RepositoryRunner() );
 
-	/**
-	 * Access method to singleton instance created when first called.
-	 * @return reference to singleton builder instance.
-	 */
-	public static RepositoryBuilder getInstance() {
-		if( _singletonInstance == null ) {
-			_singletonInstance = new RepositoryBuilder();
-		}
-		return _singletonInstance;
+	private class RepositoryRunner implements RunnerIntf {
+
+		@Override
+		public void startup() { }
+
+		@Override
+		public void shutdown() { }
+
+		@Override
+		public void start( Callback<Integer> onStart, Callback<String> onExit, Callback<String> onError ) { }
+
+		@Override
+		public void exit( String msg ) { }
+
+		@Override
+		public void error( String msg ) { }
 	}
 
 
@@ -59,21 +83,17 @@ public class RepositoryBuilder implements BuilderIntf {
 	 */
 	@Override
 	public RepositoryRunner build() {
-		HashMap<String, RepositoryIntf<?>> repositoryMap = new HashMap<String,RepositoryIntf<?>>();
 
-		List<Customer>customerList = buildCustomerData_phase1();
-		RepositoryIntf<Customer> customerRepository = new SimpleRepositoryImpl<Customer>( customerList );
-		repositoryMap.put( Customer.class.getName(), customerRepository );
+		if( customerRepository.count() == 0 ) {
+			customerRepository.saveAll( buildCustomerData_phase1() );
+			//buildCustomerData_phase2( customerRepository );
+		}
 
-		buildCustomerData_phase2( customerRepository );
+		if( articleRepository.count() == 0 ) {
+			articleRepository.saveAll( buildArticleData() );
+		}
 
-		List<Article>articleList = buildArticleData();
-		RepositoryIntf<Article> articleRepository = new SimpleRepositoryImpl<Article>( articleList );
-		repositoryMap.put( Article.class.getName(), articleRepository );
-
-		RepositoryRunner repositoryRunner = new RepositoryRunner( repositoryMap );
-		this.repositoryRunner = Optional.of( repositoryRunner );
-		return repositoryRunner;
+		return repositoryRunner.get();
 	}
 
 
@@ -171,6 +191,7 @@ public class RepositoryBuilder implements BuilderIntf {
 		return list;
 	}
 
+
 	private void buildCustomerData_phase2( RepositoryIntf<Customer> customerRepository ) {
 
 		for( Customer c2 : customerRepository.findByName( ".* S.*", Long.MAX_VALUE ) ) {
@@ -206,6 +227,7 @@ public class RepositoryBuilder implements BuilderIntf {
 				.setStatus( Customer.Status.SUSP );
 		});
 
+		customerRepository.saveAll( customerRepository.findAll() );
 	}
 
 
