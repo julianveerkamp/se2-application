@@ -4,6 +4,16 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Date;
 
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.ManyToOne;
+import javax.persistence.FetchType;
+
 import com.application.se2.misc.EntityProperty;
 
 
@@ -16,15 +26,29 @@ import com.application.se2.misc.EntityProperty;
  * 
  * @author sgra64
  */
+@Entity
+@Table(name="NOTES")
 public class Note implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private static final String FieldSeparator = ";; ";
 	private static long lastTimeStamp = 0L;
 
+	@Id
+	@GeneratedValue(strategy=GenerationType.AUTO)
+	@Column(name="id")
+	private long id;
+
+	@Column(name="TIME")
 	private Date timeStamp = null;		// TimeStamp part of Note.
 
+	@Column(name="TEXT")
 	private String noteText = null;		// Text part of Note.
+
+	@ManyToOne(
+		fetch = FetchType.LAZY
+	)
+	private Customer customer;
 
 
 	/**
@@ -32,7 +56,7 @@ public class Note implements Serializable {
 	 * is sufficient). Public default constructor needed by Hibernate/JPA access.
 	 * Otherwise Hibernate Error: HHH000142: Bytecode enhancement failed).
 	 */
-	public Note() {
+	private Note() {
 		this.timeStamp = new Date();
 		this.noteText = "";
 	}
@@ -72,6 +96,24 @@ public class Note implements Serializable {
 		this.noteText = text;
 	}
 
+	/**
+	 * Return Customer.
+	 * 
+	 * @return Customer.
+	 */
+	public Customer getCustomer() {
+		return customer;
+	}
+
+
+	/**
+	 * Set Customer
+	 * 
+	 * @param customer Customer.
+	 */
+	public void setCustomer( Customer customer ) {
+		this.customer = customer;
+	}
 
 	/**
 	 * Externalize Note as String. Example: "2018-03-15 20:10:27.730, Customer 1234 created".

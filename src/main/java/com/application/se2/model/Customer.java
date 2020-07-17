@@ -10,6 +10,9 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.OneToMany;
+import javax.persistence.FetchType;
+import javax.persistence.CascadeType;
 
 import com.application.se2.misc.IDGenerator;
 
@@ -46,7 +49,11 @@ public class Customer implements com.application.se2.model.Entity {
 	@Convert(converter = com.application.se2.model.customserializer.StringListConverter.class)		// map List<String> to single, ';'-separated String
 	private final List<String>contacts;
 
-	@Transient
+	@OneToMany(
+		fetch = FetchType.EAGER,
+		cascade = CascadeType.ALL,
+		mappedBy = "customer"
+	)
 	private final List<Note>notes;
 
 	//@Transient
@@ -189,6 +196,7 @@ public class Customer implements com.application.se2.model.Entity {
 	public Customer addNote( final String noteStr ) {
 		if( noteStr != null && noteStr.length() > 0 ) {
 			Note note = new Note( noteStr.trim() );
+			note.setCustomer(this);
 			notes.add( note );
 		}
 		return this;

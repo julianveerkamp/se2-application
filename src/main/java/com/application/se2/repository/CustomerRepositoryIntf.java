@@ -1,6 +1,7 @@
 package com.application.se2.repository;
 
 import java.util.Optional;
+import java.util.List;
 
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -22,6 +23,9 @@ import com.application.se2.model.Customer;
 @Repository
 public interface CustomerRepositoryIntf extends CrudRepository<Customer, String> {
 
+	public Customer findByName(String name);
+	public List<Customer> findByNameStartingWith(String match);
+	public List<Customer> findByNameContaining(String match);
 	/**
 	 * Find method that returns entity that matches the regular expression. If more than
 	 * one entity match, a random matching entity is returned.
